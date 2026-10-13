@@ -14,6 +14,8 @@ export default function Accept({ invitation }) {
         post(route('invitations.accept.post', invitation.token));
     };
 
+    const article = /^[aeiou]/i.test(invitation.role) ? 'an' : 'a';
+
     return (
         <GuestLayout>
             <Head title={`Invitation to join ${invitation.team_name}`} />
@@ -30,7 +32,7 @@ export default function Accept({ invitation }) {
                 </h2>
 
                 <p className="mt-2 text-sm text-gray-600">
-                    You have been invited to join <span className="font-semibold text-gray-800">{invitation.team_name}</span> as an{' '}
+                    You have been invited to join <span className="font-semibold text-gray-800">{invitation.team_name}</span> as {article}{' '}
                     <span className="font-semibold uppercase text-indigo-600">{invitation.role}</span>.
                 </p>
 

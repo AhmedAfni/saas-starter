@@ -226,3 +226,40 @@ test('project policy authorizes roles correctly', function () {
         ->and(Gate::forUser($owner)->allows('update', $project))->toBeTrue()
         ->and(Gate::forUser($owner)->allows('delete', $project))->toBeTrue();
 });
+
+test('accepting an invite does not change role if user is already a team member', function () {
+    $team = Team::factory()->create();
+
+    $existingAdmin = User::factory()->create(['email' => 'existingadmin@example.com']);
+    $team->users()->attach($existingAdmin->id, ['role' => Role::Admin->value]);
+
+    $invitation = Invitation::factory()->create([
+        'team_id' => $team->id,
+        'email' => 'existingadmin@example.com',
+        'role' => Role::Member->value,
+    ]);
+
+    $response = $this->actingAs($existingAdmin)->get("/invitations/{$invitation->token}");
+    $response->assertRedirect(route('dashboard'));
+
+    expect($existingAdmin->fresh()->teamRole($team))->toBe(Role::Admin->value)
+        ->and($invitation->fresh()->accepted_at)->not->toBeNull();
+});
+
+test('a plain member cannot see invite form or member management controls on team members page', function () {
+    $owner = User::factory()->withPersonalTeam('Alpha Team')->create();
+    $team = $owner->currentTeam;
+
+    $member = User::factory()->create();
+    $team->users()->attach($member->id, ['role' => Role::Member->value]);
+
+    $response = $this->actingAs($member)->get("/teams/{$team->id}/members");
+    $response->assertOk();
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('Teams/Members')
+        ->where('permissions.can_invite', false)
+        ->where('permissions.can_manage_members', false)
+        ->where('permissions.is_owner', false)
+    );
+});

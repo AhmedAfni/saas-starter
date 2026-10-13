@@ -56,7 +56,7 @@ class TeamMemberController extends Controller
             'invitations' => $invitations,
             'permissions' => [
                 'can_invite' => $request->user()->can('invite', $team),
-                'can_manage_members' => $request->user()->hasTeamRole($team, [Role::Owner, Role::Admin]),
+                'can_manage_members' => $request->user()->can('manageMembers', $team),
                 'is_owner' => $request->user()->isTeamOwner($team),
             ],
             'availableRoles' => Role::assignableRoles(),

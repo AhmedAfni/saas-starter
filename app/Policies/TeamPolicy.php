@@ -49,6 +49,14 @@ class TeamPolicy
     }
 
     /**
+     * Determine whether the user can manage team members (change roles, remove members).
+     */
+    public function manageMembers(User $user, Team $team): bool
+    {
+        return $user->hasTeamRole($team, [Role::Owner, Role::Admin]);
+    }
+
+    /**
      * Determine whether the user can change a member's role.
      */
     public function updateMemberRole(User $user, Team $team, User $member): bool

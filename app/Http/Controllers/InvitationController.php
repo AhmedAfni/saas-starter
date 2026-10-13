@@ -52,14 +52,16 @@ class InvitationController extends Controller
             abort(403, "This invitation was sent to {$invitation->email}. You are currently signed in as {$user->email}.");
         }
 
-        // Mark as accepted and attach member
+        // Mark as accepted and attach member if not already on the team
         $invitation->update([
             'accepted_at' => now(),
         ]);
 
-        $invitation->team->users()->syncWithoutDetaching([
-            $user->id => ['role' => $invitation->role],
-        ]);
+        if (! $user->belongsToTeam($invitation->team)) {
+            $invitation->team->users()->attach($user->id, [
+                'role' => $invitation->role,
+            ]);
+        }
 
         $user->switchTeam($invitation->team);
         session()->forget('invitation_token');
