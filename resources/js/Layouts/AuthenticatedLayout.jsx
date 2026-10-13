@@ -30,6 +30,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
+                                {user.current_team_id && (
+                                    <NavLink
+                                        href={route('teams.members.index', user.current_team_id)}
+                                        active={route().current('teams.members.index')}
+                                    >
+                                        Team Members
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -185,6 +193,14 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Dashboard
                         </ResponsiveNavLink>
+                        {user.current_team_id && (
+                            <ResponsiveNavLink
+                                href={route('teams.members.index', user.current_team_id)}
+                                active={route().current('teams.members.index')}
+                            >
+                                Team Members
+                            </ResponsiveNavLink>
+                        )}
                     </div>
 
                     {user.teams && user.teams.length > 0 && (

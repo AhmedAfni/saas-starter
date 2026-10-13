@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -81,12 +82,44 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has one of the given roles on the team.
+     */
+    public function hasTeamRole(Team $team, Role|string|array $roles): bool
+    {
+        $userRole = $this->teamRole($team);
+        if (! $userRole) {
+            return false;
+        }
+
+        $roles = is_array($roles) ? $roles : [$roles];
+        $roleValues = array_map(fn ($r) => $r instanceof Role ? $r->value : $r, $roles);
+
+        return in_array($userRole, $roleValues, true);
+    }
+
+    /**
+     * Check if the user is the owner of the team.
+     */
+    public function isTeamOwner(Team $team): bool
+    {
+        return $this->hasTeamRole($team, Role::Owner);
+    }
+
+    /**
+     * Check if the user is an admin of the team.
+     */
+    public function isTeamAdmin(Team $team): bool
+    {
+        return $this->hasTeamRole($team, Role::Admin);
+    }
+
+    /**
      * Create and set a default personal team for the user.
      */
     public function createPersonalTeam(?string $name = null): Team
     {
         $team = Team::create([
-            'name' => $name ?? (explode(' ', $this->name, 2)[0] . "'s Team"),
+            'name' => $name ?? (explode(' ', $this->name, 2)[0]."'s Team"),
         ]);
 
         $this->teams()->attach($team->id, ['role' => 'owner']);

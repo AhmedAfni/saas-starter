@@ -17,7 +17,7 @@ trait BelongsToTeam
         static::addGlobalScope(new TeamScope);
 
         static::creating(function ($model) {
-            if (empty($model->team_id) && Auth::hasUser() && Auth::user()->current_team_id) {
+            if (is_null($model->team_id) && Auth::hasUser() && Auth::user()->current_team_id) {
                 $model->team_id = Auth::user()->current_team_id;
             }
         });
