@@ -97,4 +97,13 @@ class TeamPolicy
 
         return true;
     }
+
+    /**
+     * Determine whether the user can manage billing for the team.
+     * Owner only.
+     */
+    public function manageBilling(User $user, Team $team): bool
+    {
+        return $user->isTeamOwner($team);
+    }
 }

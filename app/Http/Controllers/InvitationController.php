@@ -58,6 +58,10 @@ class InvitationController extends Controller
         ]);
 
         if (! $user->belongsToTeam($invitation->team)) {
+            if (! $invitation->team->isSubscribed() && $invitation->team->users()->count() >= 3) {
+                abort(403, 'This team has reached its free plan limit of 3 members. The team owner must upgrade to accept more members.');
+            }
+
             $invitation->team->users()->attach($user->id, [
                 'role' => $invitation->role,
             ]);

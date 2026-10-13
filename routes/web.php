@@ -3,6 +3,8 @@
 use App\Http\Controllers\CurrentTeamController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\TeamBillingController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TeamMemberController;
 use Illuminate\Foundation\Application;
@@ -30,6 +32,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/teams/{team}/invitations', [TeamInvitationController::class, 'store'])->name('teams.invitations.store');
     Route::delete('/teams/{team}/invitations/{invitation}', [TeamInvitationController::class, 'destroy'])->name('teams.invitations.destroy');
 
+    Route::get('/teams/{team}/billing', [TeamBillingController::class, 'index'])->name('teams.billing.index');
+    Route::post('/teams/{team}/billing/subscribe', [TeamBillingController::class, 'subscribe'])->name('teams.billing.subscribe');
+    Route::post('/teams/{team}/billing/portal', [TeamBillingController::class, 'portal'])->name('teams.billing.portal');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -37,5 +43,7 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/invitations/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
 Route::post('/invitations/{token}', [InvitationController::class, 'storeAccept'])->name('invitations.accept.post');
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 require __DIR__.'/auth.php';

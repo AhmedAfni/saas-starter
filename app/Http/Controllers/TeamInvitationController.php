@@ -27,6 +27,12 @@ class TeamInvitationController extends Controller
             'role' => ['required', 'string', Rule::in(Role::assignableRoles())],
         ]);
 
+        if ($team->hasReachedMemberLimit()) {
+            throw ValidationException::withMessages([
+                'email' => 'Free teams can have a maximum of 3 members (including pending invitations). Please upgrade your plan to invite more teammates.',
+            ]);
+        }
+
         if ($team->users()->where('email', $validated['email'])->exists()) {
             throw ValidationException::withMessages([
                 'email' => 'This user is already a member of the team.',

@@ -38,6 +38,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Team Members
                                     </NavLink>
                                 )}
+                                {user.current_team_id && user.teams?.find((t) => t.id === user.current_team_id)?.pivot?.role === 'owner' && (
+                                    <NavLink
+                                        href={route('teams.billing.index', user.current_team_id)}
+                                        active={route().current('teams.billing.index')}
+                                    >
+                                        Billing
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -199,6 +207,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 active={route().current('teams.members.index')}
                             >
                                 Team Members
+                            </ResponsiveNavLink>
+                        )}
+                        {user.current_team_id && user.teams?.find((t) => t.id === user.current_team_id)?.pivot?.role === 'owner' && (
+                            <ResponsiveNavLink
+                                href={route('teams.billing.index', user.current_team_id)}
+                                active={route().current('teams.billing.index')}
+                            >
+                                Billing
                             </ResponsiveNavLink>
                         )}
                     </div>

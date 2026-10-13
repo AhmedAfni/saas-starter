@@ -9,6 +9,7 @@ use App\Policies\TeamPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Cashier::useCustomerModel(Team::class);
+
         Gate::policy(Team::class, TeamPolicy::class);
         Gate::policy(Project::class, ProjectPolicy::class);
 

@@ -8,15 +8,32 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Cashier\Billable;
 
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
-    use HasFactory;
+    use Billable, HasFactory;
 
     protected $fillable = [
         'name',
+        'stripe_id',
+        'pm_type',
+        'pm_last_four',
+        'trial_ends_at',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'trial_ends_at' => 'datetime',
+        ];
+    }
 
     public function users(): BelongsToMany
     {
@@ -49,5 +66,41 @@ class Team extends Model
     public function isOwner(User $user): bool
     {
         return $user->hasTeamRole($this, Role::Owner);
+    }
+
+    /**
+     * Determine if team has an active subscription.
+     */
+    public function isSubscribed(): bool
+    {
+        return $this->subscribed();
+    }
+
+    /**
+     * Total member seats taken: current members + pending active invitations.
+     */
+    public function totalMemberSeatsTaken(): int
+    {
+        $membersCount = $this->users()->count();
+        $pendingInvitesCount = $this->invitations()
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->count();
+
+        return $membersCount + $pendingInvitesCount;
+    }
+
+    /**
+     * Check if team has reached its member plan limit.
+     * Free teams: max 3 members (including pending invites).
+     * Subscribed teams: unlimited.
+     */
+    public function hasReachedMemberLimit(): bool
+    {
+        if ($this->isSubscribed()) {
+            return false;
+        }
+
+        return $this->totalMemberSeatsTaken() >= 3;
     }
 }
