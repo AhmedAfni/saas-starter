@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Models\WebhookEvent;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Laravel\Cashier\Billable;
 use Laravel\Cashier\Http\Controllers\WebhookController;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,25 +21,25 @@ class StripeWebhookController extends WebhookController
         $payload = json_decode($request->getContent(), true);
         $eventId = $payload['id'] ?? null;
 
-        if ($eventId) {
-            // Check if this Stripe event has already been processed (idempotency guard)
-            if (WebhookEvent::where('event_id', $eventId)->exists()) {
-                return new Response('Webhook Already Processed', 200);
-            }
-
-            try {
-                WebhookEvent::create([
-                    'event_id' => $eventId,
-                    'type' => $payload['type'] ?? null,
-                    'payload' => json_encode($payload),
-                ]);
-            } catch (\Throwable $e) {
-                // Caught duplicate key collision on event_id from concurrent requests
-                return new Response('Webhook Already Processed', 200);
-            }
+        if ($eventId && WebhookEvent::where('event_id', $eventId)->exists()) {
+            return new Response('Webhook Already Processed', 200);
         }
 
-        return parent::handleWebhook($request);
+        try {
+            return DB::transaction(function () use ($request, $payload, $eventId) {
+                if ($eventId) {
+                    WebhookEvent::create([
+                        'event_id' => $eventId,
+                        'type' => $payload['type'] ?? null,
+                        'payload' => json_encode($payload),
+                    ]);
+                }
+
+                return parent::handleWebhook($request);
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            return new Response('Webhook Already Processed', 200);
+        }
     }
 
     /**
