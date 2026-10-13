@@ -39,12 +39,20 @@ export default function AuthenticatedLayout({ header, children }) {
                                     </NavLink>
                                 )}
                                 {user.current_team_id && user.teams?.find((t) => t.id === user.current_team_id)?.pivot?.role === 'owner' && (
-                                    <NavLink
-                                        href={route('teams.billing.index', user.current_team_id)}
-                                        active={route().current('teams.billing.index')}
-                                    >
-                                        Billing
-                                    </NavLink>
+                                    <>
+                                        <NavLink
+                                            href={route('teams.billing.index', user.current_team_id)}
+                                            active={route().current('teams.billing.index')}
+                                        >
+                                            Billing
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('teams.invoices.index', user.current_team_id)}
+                                            active={route().current('teams.invoices.index')}
+                                        >
+                                            Invoices
+                                        </NavLink>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -210,12 +218,20 @@ export default function AuthenticatedLayout({ header, children }) {
                             </ResponsiveNavLink>
                         )}
                         {user.current_team_id && user.teams?.find((t) => t.id === user.current_team_id)?.pivot?.role === 'owner' && (
-                            <ResponsiveNavLink
-                                href={route('teams.billing.index', user.current_team_id)}
-                                active={route().current('teams.billing.index')}
-                            >
-                                Billing
-                            </ResponsiveNavLink>
+                            <>
+                                <ResponsiveNavLink
+                                    href={route('teams.billing.index', user.current_team_id)}
+                                    active={route().current('teams.billing.index')}
+                                >
+                                    Billing
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('teams.invoices.index', user.current_team_id)}
+                                    active={route().current('teams.invoices.index')}
+                                >
+                                    Invoices
+                                </ResponsiveNavLink>
+                            </>
                         )}
                     </div>
 

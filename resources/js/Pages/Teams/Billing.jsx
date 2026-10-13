@@ -1,7 +1,7 @@
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 export default function Billing({ team, isSubscribed, subscription, memberCount, totalSeatsTaken, maxFreeSeats }) {
     const { flash } = usePage().props;
@@ -30,6 +30,14 @@ export default function Billing({ team, isSubscribed, subscription, memberCount,
                         <p className="mt-1 text-sm text-gray-500">
                             Manage subscription plans and member limits for your team.
                         </p>
+                    </div>
+                    <div>
+                        <Link
+                            href={route('teams.invoices.index', team.id)}
+                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm transition hover:bg-gray-50"
+                        >
+                            View Invoices &rarr;
+                        </Link>
                     </div>
                 </div>
             }

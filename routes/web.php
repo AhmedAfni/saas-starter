@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TeamBillingController;
 use App\Http\Controllers\TeamInvitationController;
+use App\Http\Controllers\TeamInvoiceController;
 use App\Http\Controllers\TeamMemberController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/teams/{team}/billing', [TeamBillingController::class, 'index'])->name('teams.billing.index');
     Route::post('/teams/{team}/billing/subscribe', [TeamBillingController::class, 'subscribe'])->name('teams.billing.subscribe');
     Route::post('/teams/{team}/billing/portal', [TeamBillingController::class, 'portal'])->name('teams.billing.portal');
+    Route::get('/teams/{team}/invoices', [TeamInvoiceController::class, 'index'])->name('teams.invoices.index');
+    Route::get('/teams/{team}/invoices/{invoice}/download', [TeamInvoiceController::class, 'download'])->name('teams.invoices.download');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
