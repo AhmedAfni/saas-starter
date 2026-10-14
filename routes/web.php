@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\CurrentTeamController;
-use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StripeWebhookController;
@@ -20,8 +19,6 @@ Route::get('/', function () {
 
     return Inertia::render('Welcome');
 })->name('home');
-
-Route::post('/demo-login', [DemoLoginController::class, 'login'])->name('demo.login');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
