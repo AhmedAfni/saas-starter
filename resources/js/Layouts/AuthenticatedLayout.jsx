@@ -1,6 +1,8 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import Avatar from '@/Components/Avatar';
 import Dropdown from '@/Components/Dropdown';
 import ThemeToggle from '@/Components/ThemeToggle';
+import Toast from '@/Components/Toast';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
@@ -186,9 +188,7 @@ export default function AuthenticatedLayout({ header, children }) {
             {/* User Info & Visible Profile / Logout Footer */}
             <div className="border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3">
                 <div className="flex items-center space-x-2.5 px-1 py-1">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-xs font-bold text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700">
-                        {getInitials(user.name)}
-                    </div>
+                    <Avatar name={user.name} size="md" />
                     <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
                             {user.name}
@@ -291,6 +291,9 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </main>
             </div>
+
+            {/* Global Flash Toast */}
+            <Toast />
         </div>
     );
 }

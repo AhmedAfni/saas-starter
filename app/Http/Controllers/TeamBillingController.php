@@ -18,6 +18,12 @@ class TeamBillingController extends Controller
     {
         Gate::authorize('manageBilling', $team);
 
+        if ($request->query('checkout') === 'success') {
+            session()->flash('status', 'Your subscription was activated successfully!');
+        } elseif ($request->query('checkout') === 'cancelled') {
+            session()->flash('status', 'Checkout was cancelled.');
+        }
+
         $subscription = $team->subscription();
 
         return Inertia::render('Teams/Billing', [

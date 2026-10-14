@@ -1,3 +1,4 @@
+import Avatar from '@/Components/Avatar';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -163,9 +164,7 @@ export default function Members({ team, members, invitations = [], permissions, 
                                 className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 py-3.5 space-y-2 sm:space-y-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
                             >
                                 <div className="flex items-center space-x-3">
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700">
-                                        {getInitials(member.name)}
-                                    </div>
+                                    <Avatar name={member.name} size="md" />
                                     <div>
                                         <div className="flex items-center space-x-2">
                                             <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">

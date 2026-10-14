@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CurrentTeamController;
+use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StripeWebhookController;
@@ -8,18 +9,18 @@ use App\Http\Controllers\TeamBillingController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TeamInvoiceController;
 use App\Http\Controllers\TeamMemberController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return Inertia::render('Welcome');
+})->name('home');
+
+Route::post('/demo-login', [DemoLoginController::class, 'login'])->name('demo.login');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
