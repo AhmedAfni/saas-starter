@@ -25,7 +25,7 @@ export default function ThemeToggle({ className = '' }) {
         <button
             type="button"
             onClick={toggleTheme}
-            className={`inline-flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${className}`}
+            className={`inline-flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${className}`}
             title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-label="Toggle theme"
         >

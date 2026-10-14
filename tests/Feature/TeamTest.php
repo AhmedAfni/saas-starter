@@ -114,3 +114,64 @@ test('tenant global scope can be bypassed explicitly when required', function ()
     expect(Project::count())->toBe(0);
     expect(Project::withoutGlobalScope(TeamScope::class)->count())->toBe(2);
 });
+
+test('a user can create a team and becomes its owner', function () {
+    $user = User::factory()->withPersonalTeam('Initial Team')->create();
+
+    $response = $this->actingAs($user)->post('/teams', [
+        'name' => 'Brand New Workspace',
+    ]);
+
+    $response->assertRedirect('/dashboard');
+    $response->assertSessionHasNoErrors();
+
+    $newTeam = Team::where('name', 'Brand New Workspace')->first();
+    expect($newTeam)->not->toBeNull();
+    expect($user->fresh()->current_team_id)->toBe($newTeam->id);
+    expect($user->fresh()->teamRole($newTeam))->toBe('owner');
+});
+
+test('a member cannot rename a team', function () {
+    $team = Team::create(['name' => 'Original Team Name']);
+    $member = User::factory()->create();
+    $team->users()->attach($member->id, ['role' => 'member']);
+    $member->forceFill(['current_team_id' => $team->id])->save();
+
+    $response = $this->actingAs($member)->patch("/teams/{$team->id}/settings", [
+        'name' => 'Hacked Team Name',
+    ]);
+
+    $response->assertStatus(403);
+    expect($team->fresh()->name)->toBe('Original Team Name');
+});
+
+test('an admin of team A cannot rename team B', function () {
+    $teamA = Team::create(['name' => 'Team A']);
+    $teamB = Team::create(['name' => 'Team B']);
+
+    $adminUser = User::factory()->create();
+    $teamA->users()->attach($adminUser->id, ['role' => 'admin']);
+    $adminUser->forceFill(['current_team_id' => $teamA->id])->save();
+
+    // Admin of Team A attempts to rename Team B
+    $response = $this->actingAs($adminUser)->patch("/teams/{$teamB->id}/settings", [
+        'name' => 'Illegally Renamed Team B',
+    ]);
+
+    $response->assertStatus(403);
+    expect($teamB->fresh()->name)->toBe('Team B');
+});
+
+test('an owner or admin of the team can rename it', function () {
+    $team = Team::create(['name' => 'Original Name']);
+    $owner = User::factory()->create();
+    $team->users()->attach($owner->id, ['role' => 'owner']);
+    $owner->forceFill(['current_team_id' => $team->id])->save();
+
+    $response = $this->actingAs($owner)->patch("/teams/{$team->id}/settings", [
+        'name' => 'Updated Team Name',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    expect($team->fresh()->name)->toBe('Updated Team Name');
+});

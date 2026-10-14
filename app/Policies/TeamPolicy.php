@@ -25,6 +25,15 @@ class TeamPolicy
     }
 
     /**
+     * Determine whether the user can rename the team.
+     * Owner or Admin of THAT team.
+     */
+    public function rename(User $user, Team $team): bool
+    {
+        return $user->hasTeamRole($team, [Role::Owner, Role::Admin]);
+    }
+
+    /**
      * Determine whether the user can delete the team.
      */
     public function delete(User $user, Team $team): bool

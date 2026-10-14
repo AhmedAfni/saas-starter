@@ -1,9 +1,15 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Avatar from '@/Components/Avatar';
 import Dropdown from '@/Components/Dropdown';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
 import ThemeToggle from '@/Components/ThemeToggle';
 import Toast from '@/Components/Toast';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     LayoutDashboard,
@@ -16,11 +22,35 @@ import {
     Check,
     LogOut,
     User as UserIcon,
+    Plus,
+    Settings as SettingsIcon,
 } from 'lucide-react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
+
+    const {
+        data: createTeamData,
+        setData: setCreateTeamData,
+        post: postCreateTeam,
+        processing: creatingTeam,
+        errors: createTeamErrors,
+        reset: resetCreateTeam,
+    } = useForm({
+        name: '',
+    });
+
+    const submitCreateTeam = (e) => {
+        e.preventDefault();
+        postCreateTeam(route('teams.store'), {
+            onSuccess: () => {
+                setCreateTeamModalOpen(false);
+                resetCreateTeam();
+            },
+        });
+    };
 
     const currentTeam = user.current_team;
     const isOwner =
@@ -29,6 +59,8 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const currentRole =
         user.teams?.find((t) => t.id === user.current_team_id)?.pivot?.role || 'member';
+
+    const canRenameTeam = isOwner || currentRole === 'admin';
 
     const navItems = [
         {
@@ -61,16 +93,6 @@ export default function AuthenticatedLayout({ header, children }) {
         },
     ];
 
-    const getInitials = (name) => {
-        if (!name) return 'U';
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-    };
-
     const sidebarContent = (
         <div className="flex h-full flex-col justify-between overflow-y-auto bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
             <div>
@@ -99,7 +121,8 @@ export default function AuthenticatedLayout({ header, children }) {
                             <Dropdown.Trigger>
                                 <button
                                     type="button"
-                                    className="group flex w-full items-center justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 p-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                    className="group flex w-full items-center justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 p-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                                    aria-label="Switch workspace"
                                 >
                                     <div className="flex items-center min-w-0 space-x-2">
                                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-sm">
@@ -144,6 +167,27 @@ export default function AuthenticatedLayout({ header, children }) {
                                         );
                                     })}
                                 </div>
+
+                                <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1 space-y-0.5">
+                                    {canRenameTeam && (
+                                        <Dropdown.Link
+                                            href={route('teams.settings.edit', currentTeam.id)}
+                                            className="flex items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        >
+                                            <SettingsIcon className="mr-2 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                                            <span>Team Settings</span>
+                                        </Dropdown.Link>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setCreateTeamModalOpen(true)}
+                                        className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition"
+                                    >
+                                        <Plus className="mr-2 h-3.5 w-3.5" />
+                                        <span>Create New Team</span>
+                                    </button>
+                                </div>
                             </Dropdown.Content>
                         </Dropdown>
                     </div>
@@ -164,7 +208,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         key={item.name}
                                         href={item.href}
                                         onClick={() => setMobileMenuOpen(false)}
-                                        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                                        className={`group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                                             item.active
                                                 ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm border-l-4 border-indigo-600 dark:border-indigo-400'
                                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100'
@@ -203,11 +247,12 @@ export default function AuthenticatedLayout({ header, children }) {
                     <Link
                         href={route('profile.edit')}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                             route().current('profile.edit')
                                 ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold'
                                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}
+                        aria-label="Account Profile"
                     >
                         <UserIcon className="h-3.5 w-3.5" />
                         <span>Profile</span>
@@ -216,7 +261,8 @@ export default function AuthenticatedLayout({ header, children }) {
                         href={route('logout')}
                         method="post"
                         as="button"
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition focus:outline-none focus:ring-2 focus:ring-red-500"
+                        aria-label="Log out of account"
                     >
                         <LogOut className="h-3.5 w-3.5" />
                         <span>Log out</span>
@@ -236,19 +282,17 @@ export default function AuthenticatedLayout({ header, children }) {
             {/* Mobile Sidebar Overlay Drawer */}
             {mobileMenuOpen && (
                 <div className="fixed inset-0 z-50 md:hidden">
-                    {/* Backdrop */}
                     <div
                         className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
                         onClick={() => setMobileMenuOpen(false)}
                     />
 
-                    {/* Drawer Content */}
                     <div className="fixed inset-y-0 left-0 flex w-72 max-w-full flex-col bg-white dark:bg-slate-900 shadow-2xl">
                         <div className="absolute right-3 top-3 z-10">
                             <button
                                 type="button"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                                 aria-label="Close navigation"
                             >
                                 <X className="h-5 w-5" />
@@ -269,7 +313,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <button
                                     type="button"
                                     onClick={() => setMobileMenuOpen(true)}
-                                    className="inline-flex md:hidden items-center justify-center rounded-lg p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shrink-0"
+                                    className="inline-flex md:hidden items-center justify-center rounded-lg p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 shrink-0"
                                     aria-label="Open mobile navigation"
                                 >
                                     <Menu className="h-5 w-5" />
@@ -291,6 +335,46 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </main>
             </div>
+
+            {/* Create Team Modal */}
+            <Modal show={createTeamModalOpen} onClose={() => setCreateTeamModalOpen(false)}>
+                <form onSubmit={submitCreateTeam} className="p-6">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Create New Team Workspace
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Provide a name for your new team workspace. You will be assigned as its Owner.
+                    </p>
+
+                    <div className="mt-4">
+                        <InputLabel htmlFor="new-team-name" value="Team Name" />
+                        <TextInput
+                            id="new-team-name"
+                            type="text"
+                            value={createTeamData.name}
+                            onChange={(e) => setCreateTeamData('name', e.target.value)}
+                            placeholder="e.g. Acme Studio"
+                            className="mt-1 block w-full text-sm"
+                            isFocused
+                            required
+                        />
+                        <InputError message={createTeamErrors.name} className="mt-1.5" />
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setCreateTeamModalOpen(false)}
+                            disabled={creatingTeam}
+                        >
+                            Cancel
+                        </SecondaryButton>
+                        <PrimaryButton disabled={creatingTeam}>
+                            {creatingTeam ? 'Creating...' : 'Create Team'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Global Flash Toast */}
             <Toast />

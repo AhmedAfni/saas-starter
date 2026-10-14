@@ -2,11 +2,13 @@ import Avatar from '@/Components/Avatar';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import { showToast } from '@/Components/Toast';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     Users,
@@ -19,11 +21,15 @@ import {
     Trash2,
     CheckCircle2,
     AlertCircle,
+    ArrowRight,
 } from 'lucide-react';
 
 export default function Members({ team, members, invitations = [], permissions, availableRoles }) {
     const { flash = {}, errors: pageErrors = {} } = usePage().props;
     const [copiedToken, setCopiedToken] = useState(null);
+    const [memberToRemove, setMemberToRemove] = useState(null);
+    const [invitationToCancel, setInvitationToCancel] = useState(null);
+    const [actionProcessing, setActionProcessing] = useState(false);
 
     const {
         data: inviteData,
@@ -52,61 +58,70 @@ export default function Members({ team, members, invitations = [], permissions, 
         );
     };
 
-    const handleRemoveMember = (member) => {
-        if (confirm(`Are you sure you want to remove ${member.name} from ${team.name}?`)) {
-            router.delete(
-                route('teams.members.destroy', [team.id, member.id]),
-                { preserveScroll: true }
-            );
-        }
+    const confirmRemoveMember = () => {
+        if (!memberToRemove) return;
+        setActionProcessing(true);
+        router.delete(
+            route('teams.members.destroy', [team.id, memberToRemove.id]),
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setActionProcessing(false);
+                    setMemberToRemove(null);
+                },
+            }
+        );
     };
 
-    const handleCancelInvitation = (invitationId) => {
-        if (confirm('Cancel this pending invitation?')) {
-            router.delete(
-                route('teams.invitations.destroy', [team.id, invitationId]),
-                { preserveScroll: true }
-            );
-        }
+    const confirmCancelInvitation = () => {
+        if (!invitationToCancel) return;
+        setActionProcessing(true);
+        router.delete(
+            route('teams.invitations.destroy', [team.id, invitationToCancel.id]),
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setActionProcessing(false);
+                    setInvitationToCancel(null);
+                },
+            }
+        );
     };
 
     const copyInviteUrl = (url, id) => {
-        navigator.clipboard.writeText(url);
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url);
+        }
         setCopiedToken(id);
+        showToast('Copied invite link to clipboard!');
         setTimeout(() => setCopiedToken(null), 2000);
-    };
-
-    const getInitials = (name) => {
-        if (!name) return 'U';
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
     };
 
     const renderRoleBadge = (member) => {
         if (member.is_owner) {
             return (
-                <span className="inline-flex items-center rounded-full bg-purple-50 dark:bg-purple-950/50 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:text-purple-300 ring-1 ring-inset ring-purple-600/20 dark:ring-purple-500/30">
+                <span className="inline-flex items-center rounded-full bg-purple-50 dark:bg-purple-950/60 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:text-purple-300 ring-1 ring-inset ring-purple-600/20 dark:ring-purple-500/40">
                     Owner
                 </span>
             );
         }
         if (member.role === 'admin') {
             return (
-                <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-600/20 dark:ring-indigo-500/30">
+                <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-600/20 dark:ring-indigo-500/40">
                     Admin
                 </span>
             );
         }
         return (
-            <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300 ring-1 ring-inset ring-slate-600/10 dark:ring-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 ring-1 ring-inset ring-slate-600/10 dark:ring-slate-700">
                 Member
             </span>
         );
     };
+
+    const totalSeatsTaken = members.length + invitations.length;
+    const hasSeatLimitError = Boolean(pageErrors.email && pageErrors.email.includes('maximum of 3 members'));
+    const isAtFreeSeatLimit = hasSeatLimitError || (!permissions.is_subscribed && totalSeatsTaken >= 3);
 
     return (
         <AuthenticatedLayout
@@ -143,6 +158,42 @@ export default function Members({ team, members, invitations = [], permissions, 
                     </div>
                 )}
 
+                {/* Free Seat Limit Alert */}
+                {isAtFreeSeatLimit && (
+                    <div className="rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50/80 dark:bg-amber-950/40 p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-start space-x-3">
+                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                <div>
+                                    <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                                        Free seat limit reached (3 of 3 seats occupied)
+                                    </h4>
+                                    <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/80">
+                                        {permissions.is_owner
+                                            ? 'Your free team has reached the maximum of 3 members (including active members and pending invitations). Upgrade to Pro for unlimited team collaboration.'
+                                            : 'Your team has reached the maximum free seat capacity. Ask your team owner to upgrade to invite more collaborators.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div>
+                                {permissions.is_owner ? (
+                                    <Link
+                                        href={route('teams.billing.index', team.id)}
+                                        className="inline-flex items-center shrink-0 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                    >
+                                        <span>Upgrade to Pro</span>
+                                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                                    </Link>
+                                ) : (
+                                    <span className="inline-flex items-center rounded-lg bg-amber-100 dark:bg-amber-900/50 px-3 py-1.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                                        Ask your team owner to upgrade
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Team Members List Card */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                     <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
@@ -157,61 +208,64 @@ export default function Members({ team, members, invitations = [], permissions, 
                         </span>
                     </div>
 
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                        {members.map((member) => (
-                            <div
-                                key={member.id}
-                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 py-3.5 space-y-2 sm:space-y-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <Avatar name={member.name} size="md" />
-                                    <div>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                {member.name}
-                                            </span>
-                                            {renderRoleBadge(member)}
+                    <div className="overflow-x-auto">
+                        <div className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                            {members.map((member) => (
+                                <div
+                                    key={member.id}
+                                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 py-3.5 space-y-2 sm:space-y-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <Avatar name={member.name} size="md" />
+                                        <div>
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    {member.name}
+                                                </span>
+                                                {renderRoleBadge(member)}
+                                            </div>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{member.email}</p>
                                         </div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{member.email}</p>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2.5 sm:ml-4">
+                                        {member.is_owner ? (
+                                            <span className="text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-slate-800/50 px-2.5 py-1 rounded-md border border-slate-100 dark:border-slate-800">
+                                                Owner (immutable)
+                                            </span>
+                                        ) : permissions.can_manage_members ? (
+                                            <div className="flex items-center space-x-2">
+                                                <select
+                                                    value={member.role}
+                                                    onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                                                    className="rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-2.5 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    aria-label={`Change role for ${member.name}`}
+                                                >
+                                                    {availableRoles.map((role) => (
+                                                        <option key={role} value={role}>
+                                                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setMemberToRemove(member)}
+                                                    className="inline-flex items-center rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/30 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                                                >
+                                                    <Trash2 className="mr-1 h-3.5 w-3.5 text-red-500" />
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-400 dark:text-slate-500 capitalize">
+                                                {member.role}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-
-                                <div className="flex items-center space-x-2.5 sm:ml-4">
-                                    {member.is_owner ? (
-                                        <span className="text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-slate-800/50 px-2.5 py-1 rounded-md border border-slate-100 dark:border-slate-800">
-                                            Owner (immutable)
-                                        </span>
-                                    ) : permissions.can_manage_members ? (
-                                        <div className="flex items-center space-x-2">
-                                            <select
-                                                value={member.role}
-                                                onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                                                className="rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-2.5 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                            >
-                                                {availableRoles.map((role) => (
-                                                    <option key={role} value={role}>
-                                                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                                                    </option>
-                                                ))}
-                                            </select>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveMember(member)}
-                                                className="inline-flex items-center rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/30 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 transition"
-                                            >
-                                                <Trash2 className="mr-1 h-3.5 w-3.5 text-red-500" />
-                                                Remove
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-slate-400 dark:text-slate-500 capitalize">
-                                            {member.role}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -272,7 +326,7 @@ export default function Members({ team, members, invitations = [], permissions, 
 
                             <div className="pt-1">
                                 <PrimaryButton disabled={inviteProcessing} className="px-4 py-2 text-xs">
-                                    {inviteProcessing ? 'Sending Invitation...' : 'Send Invitation'}
+                                    {inviteProcessing ? 'Saving...' : 'Send Invitation'}
                                 </PrimaryButton>
                             </div>
                         </form>
@@ -309,65 +363,125 @@ export default function Members({ team, members, invitations = [], permissions, 
                                 </p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                                {invitations.map((invitation) => (
-                                    <div
-                                        key={invitation.id}
-                                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 py-3.5 space-y-2 sm:space-y-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
-                                    >
-                                        <div className="flex items-center space-x-3">
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
-                                                <Mail className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center space-x-2">
-                                                    <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                        {invitation.email}
-                                                    </span>
-                                                    <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-500/30">
-                                                        {invitation.role}
-                                                    </span>
+                            <div className="overflow-x-auto">
+                                <div className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                                    {invitations.map((invitation) => (
+                                        <div
+                                            key={invitation.id}
+                                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 py-3.5 space-y-2 sm:space-y-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                                                    <Mail className="h-4 w-4" />
                                                 </div>
-                                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                                                    Expires {new Date(invitation.expires_at).toLocaleDateString()}
-                                                </p>
+                                                <div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            {invitation.email}
+                                                        </span>
+                                                        <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-500/40">
+                                                            {invitation.role}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                                        Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => copyInviteUrl(invitation.accept_url, invitation.id)}
+                                                    className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                                >
+                                                    {copiedToken === invitation.id ? (
+                                                        <>
+                                                            <Check className="mr-1 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                            <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy className="mr-1 h-3.5 w-3.5 text-slate-400 dark:text-slate-400" />
+                                                            <span>Copy invite link</span>
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setInvitationToCancel(invitation)}
+                                                    className="inline-flex items-center rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/30 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                                                >
+                                                    Cancel
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center space-x-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => copyInviteUrl(invitation.accept_url, invitation.id)}
-                                                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                                            >
-                                                {copiedToken === invitation.id ? (
-                                                    <>
-                                                        <Check className="mr-1 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                                        <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy className="mr-1 h-3.5 w-3.5 text-slate-400 dark:text-slate-400" />
-                                                        <span>Copy Link</span>
-                                                    </>
-                                                )}
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCancelInvitation(invitation.id)}
-                                                className="inline-flex items-center rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/30 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 transition"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
                 )}
             </div>
+
+            {/* Confirm Remove Member Modal */}
+            <Modal show={Boolean(memberToRemove)} onClose={() => setMemberToRemove(null)}>
+                <div className="p-6">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Remove Team Member
+                    </h3>
+                    <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Are you sure you want to remove <span className="font-semibold text-slate-800 dark:text-slate-200">{memberToRemove?.name}</span> ({memberToRemove?.email}) from <span className="font-semibold text-slate-800 dark:text-slate-200">{team.name}</span>? They will immediately lose access to this workspace.
+                    </p>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setMemberToRemove(null)}
+                            disabled={actionProcessing}
+                        >
+                            Cancel
+                        </SecondaryButton>
+                        <DangerButton
+                            type="button"
+                            onClick={confirmRemoveMember}
+                            disabled={actionProcessing}
+                        >
+                            {actionProcessing ? 'Removing...' : 'Remove Member'}
+                        </DangerButton>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Confirm Cancel Invitation Modal */}
+            <Modal show={Boolean(invitationToCancel)} onClose={() => setInvitationToCancel(null)}>
+                <div className="p-6">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        Cancel Pending Invitation
+                    </h3>
+                    <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Are you sure you want to cancel the invitation sent to <span className="font-semibold text-slate-800 dark:text-slate-200">{invitationToCancel?.email}</span>? The invitation link will immediately expire.
+                    </p>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setInvitationToCancel(null)}
+                            disabled={actionProcessing}
+                        >
+                            Keep Invitation
+                        </SecondaryButton>
+                        <DangerButton
+                            type="button"
+                            onClick={confirmCancelInvitation}
+                            disabled={actionProcessing}
+                        >
+                            {actionProcessing ? 'Cancelling...' : 'Cancel Invitation'}
+                        </DangerButton>
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

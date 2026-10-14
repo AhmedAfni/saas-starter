@@ -1,7 +1,8 @@
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import {
     CreditCard,
     CheckCircle2,
@@ -12,6 +13,9 @@ import {
     ExternalLink,
     ArrowRight,
     Sparkles,
+    Loader2,
+    RefreshCw,
+    AlertCircle,
 } from 'lucide-react';
 
 export default function Billing({ team, isSubscribed, subscription, memberCount, totalSeatsTaken, maxFreeSeats }) {
@@ -19,6 +23,36 @@ export default function Billing({ team, isSubscribed, subscription, memberCount,
 
     const { post: postSubscribe, processing: subscribing } = useForm({});
     const { post: postPortal, processing: loadingPortal } = useForm({});
+
+    const [pollCount, setPollCount] = useState(0);
+    const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('checkout') === 'success') {
+                setIsCheckoutSuccess(true);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isCheckoutSuccess && !isSubscribed && pollCount < 10) {
+            const timer = setTimeout(() => {
+                router.reload({
+                    only: ['isSubscribed', 'subscription'],
+                    onSuccess: () => {
+                        setPollCount((prev) => prev + 1);
+                    },
+                    onError: () => {
+                        setPollCount((prev) => prev + 1);
+                    },
+                });
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isCheckoutSuccess, isSubscribed, pollCount]);
 
     const handleSubscribe = (e) => {
         e.preventDefault();
@@ -68,6 +102,50 @@ export default function Billing({ team, isSubscribed, subscription, memberCount,
             <Head title={`Billing - ${team.name}`} />
 
             <div className="space-y-6">
+                {/* Polling / Activation Banner */}
+                {isCheckoutSuccess && !isSubscribed && (
+                    pollCount < 10 ? (
+                        <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-4 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-between space-x-3 text-indigo-900 dark:text-indigo-200">
+                            <div className="flex items-center space-x-3">
+                                <Loader2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400 animate-spin shrink-0" />
+                                <div>
+                                    <p className="text-sm font-semibold">Payment received, activating your plan...</p>
+                                    <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">Checking subscription status with Stripe (attempt {pollCount + 1}/10)...</p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-xl bg-amber-50 dark:bg-amber-950/50 p-4 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-between space-x-3 text-amber-900 dark:text-amber-200">
+                            <div className="flex items-center space-x-3">
+                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                <div>
+                                    <p className="text-sm font-semibold">Still activating, refresh in a moment</p>
+                                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Stripe webhooks may take a few seconds to deliver in background.</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => router.reload()}
+                                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                            >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                    )
+                )}
+
+                {/* Polling Success Banner */}
+                {isCheckoutSuccess && isSubscribed && (
+                    <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/50 p-4 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center space-x-3 text-emerald-800 dark:text-emerald-200">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <div>
+                            <p className="text-sm font-semibold">Subscription successfully activated!</p>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">Your team has full access to unlimited seats and Pro features.</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Flash Message */}
                 {flash?.status && (
                     <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/50 p-3.5 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center space-x-3 text-emerald-800 dark:text-emerald-200">

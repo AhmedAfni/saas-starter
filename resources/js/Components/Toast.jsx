@@ -3,6 +3,12 @@ import { usePage } from '@inertiajs/react';
 import { CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+export function showToast(message, error = false) {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app-toast', { detail: { message, error } }));
+    }
+}
+
 export default function Toast() {
     const { flash = {} } = usePage().props;
     const [visible, setVisible] = useState(false);
@@ -24,6 +30,26 @@ export default function Toast() {
             return () => clearTimeout(timer);
         }
     }, [message, flash]);
+
+    useEffect(() => {
+        const handleCustomToast = (event) => {
+            const detail = event.detail;
+            if (detail?.message) {
+                setCurrentMessage(detail.message);
+                setIsError(Boolean(detail.error));
+                setVisible(true);
+
+                const timer = setTimeout(() => {
+                    setVisible(false);
+                }, 4000);
+
+                return () => clearTimeout(timer);
+            }
+        };
+
+        window.addEventListener('app-toast', handleCustomToast);
+        return () => window.removeEventListener('app-toast', handleCustomToast);
+    }, []);
 
     if (!currentMessage) return null;
 
@@ -62,8 +88,8 @@ export default function Toast() {
                     <button
                         type="button"
                         onClick={() => setVisible(false)}
-                        className="inline-flex rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none"
-                        aria-label="Dismiss toast"
+                        className="inline-flex rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                        aria-label="Dismiss notification"
                     >
                         <X className="h-4 w-4" />
                     </button>

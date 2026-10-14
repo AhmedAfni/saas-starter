@@ -134,7 +134,7 @@ export default function Login({ status, canResetPassword }) {
                                 type="button"
                                 onClick={() => handleDemoLogin('owner')}
                                 disabled={demoLoading !== null}
-                                className="flex flex-col items-center justify-center rounded-lg border border-purple-200 dark:border-purple-900/60 bg-purple-50/60 dark:bg-purple-950/30 p-2 text-center transition hover:bg-purple-100 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:opacity-50"
+                                className="flex flex-col items-center justify-center rounded-lg border border-purple-200 dark:border-purple-900/60 bg-purple-50/60 dark:bg-purple-950/30 p-2 text-center transition hover:bg-purple-100 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:opacity-50"
                             >
                                 <span className="text-xs font-bold text-purple-700 dark:text-purple-300">
                                     {demoLoading === 'owner' ? 'Signing in...' : 'Owner'}
@@ -148,7 +148,7 @@ export default function Login({ status, canResetPassword }) {
                                 type="button"
                                 onClick={() => handleDemoLogin('admin')}
                                 disabled={demoLoading !== null}
-                                className="flex flex-col items-center justify-center rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/60 dark:bg-indigo-950/30 p-2 text-center transition hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+                                className="flex flex-col items-center justify-center rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/60 dark:bg-indigo-950/30 p-2 text-center transition hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:opacity-50"
                             >
                                 <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
                                     {demoLoading === 'admin' ? 'Signing in...' : 'Admin'}
@@ -162,7 +162,7 @@ export default function Login({ status, canResetPassword }) {
                                 type="button"
                                 onClick={() => handleDemoLogin('member')}
                                 disabled={demoLoading !== null}
-                                className="flex flex-col items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 text-center transition hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+                                className="flex flex-col items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 text-center transition hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:opacity-50"
                             >
                                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                                     {demoLoading === 'member' ? 'Signing in...' : 'Member'}

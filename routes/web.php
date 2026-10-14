@@ -6,6 +6,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TeamBillingController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TeamInvoiceController;
 use App\Http\Controllers\TeamMemberController;
@@ -27,6 +28,10 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::get('/teams/{team}/settings', [TeamController::class, 'edit'])->name('teams.settings.edit');
+    Route::patch('/teams/{team}/settings', [TeamController::class, 'update'])->name('teams.settings.update');
+
     Route::put('/teams/current', [CurrentTeamController::class, 'update'])->name('teams.current.update');
     Route::get('/teams/{team}/members', [TeamMemberController::class, 'index'])->name('teams.members.index');
     Route::patch('/teams/{team}/members/{member}', [TeamMemberController::class, 'update'])->name('teams.members.update');
