@@ -20,7 +20,7 @@ A modern, production-ready multi-tenant SaaS starter kit built on Laravel 12, In
   - **Seat Enforcement**: Free tier capped at 3 seats (active members + pending invitations); unlimited seats for subscribed teams.
 - **Invoices & Receipts**: Dedicated owner view for Stripe invoice history and hosted PDF receipts.
 - **Transaction-Safe Webhooks**: Idempotent webhook handling with unique event recording and full rollback on processing failure.
-- **Automated Pest Feature Test Suite**: 52 tests covering tenancy isolation, roles, billing gates, and webhooks.
+- **Automated Pest Feature Test Suite**: Comprehensive test suite covering tenancy isolation, roles, billing gates, and webhooks.
 
 ---
 
@@ -133,14 +133,26 @@ User roles (`owner`, `admin`, `member`) are stored on the `team_user` pivot tabl
    php artisan migrate:fresh --seed
    ```
 
-6. **Build Frontend Assets**:
+6. **Create Stripe Product & Recurring Price**:
+   ```powershell
+   php artisan stripe:setup
+   ```
+   Copy the outputted `price_...` ID and set it as `STRIPE_PRICE_ID` in your `.env` file.
+
+7. **Forward Stripe Webhooks (Local Development)**:
+   ```powershell
+   stripe listen --forward-to localhost:8000/stripe/webhook
+   ```
+   Set the returned webhook signing secret as `STRIPE_WEBHOOK_SECRET` in your `.env` file.
+
+8. **Build Frontend Assets**:
    ```powershell
    npm run build
    # or for live HMR development:
    npm run dev
    ```
 
-7. **Start the Development Server**:
+9. **Start the Development Server**:
    ```powershell
    php artisan serve
    ```
@@ -169,13 +181,14 @@ Run the automated test suite with Pest:
 
 ```powershell
 # Run the entire test suite
-php artisan test --compact
+php artisan test
 
 # Run specific feature test suites
-php artisan test --filter=TeamInvoiceTest
+php artisan test --filter=TeamTest
+php artisan test --filter=RoleAndInvitationTest
 php artisan test --filter=TeamSubscriptionTest
-php artisan test --filter=TeamInvitationTest
-php artisan test --filter=TeamScopeTest
+php artisan test --filter=TeamInvoiceTest
+php artisan test --filter=LandingTest
 ```
 
 Code formatting can be verified and applied using Laravel Pint:

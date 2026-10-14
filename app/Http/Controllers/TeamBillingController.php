@@ -43,7 +43,7 @@ class TeamBillingController extends Controller
             'memberCount' => $team->users()->count(),
             'totalSeatsTaken' => $team->totalMemberSeatsTaken(),
             'maxFreeSeats' => 3,
-            'priceId' => env('STRIPE_PRICE_ID'),
+            'priceId' => config('services.stripe.price_id'),
         ]);
     }
 
@@ -54,7 +54,7 @@ class TeamBillingController extends Controller
     {
         Gate::authorize('manageBilling', $team);
 
-        $priceId = env('STRIPE_PRICE_ID') ?: 'price_default';
+        $priceId = config('services.stripe.price_id') ?: 'price_default';
 
         $checkout = $team->newSubscription('default', $priceId)
             ->checkout([
