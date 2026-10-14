@@ -16,7 +16,7 @@ class StripeWebhookController extends WebhookController
     /**
      * Handle a Stripe webhook call with idempotency checks.
      */
-    public function handleWebhook(Request $request)
+    public function handleWebhook(Request $request): Response
     {
         $payload = json_decode($request->getContent(), true);
         $eventId = $payload['id'] ?? null;

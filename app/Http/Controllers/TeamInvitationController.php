@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Role;
+use App\Http\Requests\StoreTeamInvitationRequest;
 use App\Models\Invitation;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class TeamInvitationController extends Controller
@@ -22,10 +21,7 @@ class TeamInvitationController extends Controller
     {
         Gate::authorize('invite', $team);
 
-        $validated = $request->validate([
-            'email' => ['required', 'email', 'max:255'],
-            'role' => ['required', 'string', Rule::in(Role::assignableRoles())],
-        ]);
+        $validated = $request->validate((new StoreTeamInvitationRequest)->rules());
 
         if ($team->hasReachedMemberLimit()) {
             throw ValidationException::withMessages([

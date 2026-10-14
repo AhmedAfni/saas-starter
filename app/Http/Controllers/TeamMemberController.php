@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Http\Requests\UpdateTeamMemberRequest;
 use App\Models\Invitation;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -70,9 +70,7 @@ class TeamMemberController extends Controller
     {
         Gate::authorize('updateMemberRole', [$team, $member]);
 
-        $validated = $request->validate([
-            'role' => ['required', 'string', Rule::in(Role::assignableRoles())],
-        ]);
+        $validated = $request->validate((new UpdateTeamMemberRequest)->rules());
 
         $team->users()->updateExistingPivot($member->id, [
             'role' => $validated['role'],

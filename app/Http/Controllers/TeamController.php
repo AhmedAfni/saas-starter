@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Http\Requests\StoreTeamRequest;
+use App\Http\Requests\UpdateTeamRequest;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,11 +17,9 @@ class TeamController extends Controller
     /**
      * Store a newly created team workspace.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTeamRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $team = Team::create([
             'name' => $validated['name'],
@@ -59,9 +59,7 @@ class TeamController extends Controller
     {
         Gate::authorize('rename', $team);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $request->validate((new UpdateTeamRequest)->rules());
 
         $team->update([
             'name' => $validated['name'],
