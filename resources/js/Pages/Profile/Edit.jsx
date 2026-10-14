@@ -8,15 +8,20 @@ export default function Edit({ mustVerifyEmail, status }) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
+                <div>
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        Profile & Security
+                    </h2>
+                    <p className="mt-0.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Update your account details, email address, and security credentials.
+                    </p>
+                </div>
             }
         >
             <Head title="Profile" />
 
-            <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
+            <div className="space-y-6">
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
                     <UpdateProfileInformationForm
                         mustVerifyEmail={mustVerifyEmail}
                         status={status}
@@ -24,11 +29,11 @@ export default function Edit({ mustVerifyEmail, status }) {
                     />
                 </div>
 
-                <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
                     <UpdatePasswordForm className="max-w-xl" />
                 </div>
 
-                <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
                     <DeleteUserForm className="max-w-xl" />
                 </div>
             </div>

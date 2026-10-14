@@ -26,10 +26,10 @@ export default function Login({ status, canResetPassword }) {
             <Head title="Log in" />
 
             <div className="mb-6">
-                <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                     Welcome back
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Enter your email and password to access your team workspace.
                 </p>
             </div>
@@ -95,7 +95,7 @@ export default function Login({ status, canResetPassword }) {
                                 setData('remember', e.target.checked)
                             }
                         />
-                        <span className="ms-2 text-xs text-slate-600">
+                        <span className="ms-2 text-xs text-slate-600 dark:text-slate-400">
                             Remember for 30 days
                         </span>
                     </label>
@@ -107,12 +107,12 @@ export default function Login({ status, canResetPassword }) {
                     </PrimaryButton>
                 </div>
 
-                <div className="pt-4 text-center border-t border-slate-100">
-                    <p className="text-xs text-slate-500">
+                <div className="pt-4 text-center border-t border-slate-100 dark:border-slate-800">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                         Don't have an account yet?{' '}
                         <Link
                             href={route('register')}
-                            className="font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
+                            className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline"
                         >
                             Sign up for free
                         </Link>

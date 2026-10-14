@@ -26,10 +26,10 @@ export default function Register() {
             <Head title="Register" />
 
             <div className="mb-6">
-                <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                     Create your account
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Get started with your free cloud workspace today.
                 </p>
             </div>
@@ -121,12 +121,12 @@ export default function Register() {
                     </PrimaryButton>
                 </div>
 
-                <div className="pt-4 text-center border-t border-slate-100">
-                    <p className="text-xs text-slate-500">
+                <div className="pt-4 text-center border-t border-slate-100 dark:border-slate-800">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                         Already have an account?{' '}
                         <Link
                             href={route('login')}
-                            className="font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
+                            className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline"
                         >
                             Log in
                         </Link>
